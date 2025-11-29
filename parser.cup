@@ -1,0 +1,186 @@
+import java_cup.runtime.*;
+import java.io.*;
+import java.util.List;
+import java.util.LinkedList;
+import java.util.Collections;
+
+action code {: 
+    class Program { 
+        public String toString() { 
+            return "Programa Parsed com Sucesso!"; 
+        }
+    }
+    class VarDecl { String type; String id; public VarDecl(String t, String i) { type=t; id=i; } }
+    class FunDecl { String type; String id; List params; Stmt body; public FunDecl(String t, String i, List p, Stmt b) { type=t; id=i; params=p; body=b; } }
+    
+    // Statements
+    class Stmt {}
+    class BlockStmt extends Stmt { List stmts; public BlockStmt(List s) { stmts=s; } }
+    class IfStmt extends Stmt { Expr cond; Stmt thenStmt; Stmt elseStmt; public IfStmt(Expr c, Stmt t, Stmt e) { cond=c; thenStmt=t; elseStmt=e; } }
+    class WhileStmt extends Stmt { Expr cond; Stmt body; public WhileStmt(Expr c, Stmt b) { cond=c; body=b; } }
+    class ReturnStmt extends Stmt { Expr expr; public ReturnStmt(Expr e) { expr=e; } }
+    class AssignStmt extends Stmt { String id; Expr expr; public AssignStmt(String i, Expr e) { id=i; expr=e; } }
+    class FunCallStmt extends Stmt { String id; List args; public FunCallStmt(String i, List a) { id=i; args=a; } }
+
+    // Expressions
+    class Expr {}
+    class IntConst extends Expr { Integer value; public IntConst(Integer v) { value=v; } }
+    class FloatConst extends Expr { Float value; public FloatConst(Float v) { value=v; } }
+    class IdExpr extends Expr { String id; public IdExpr(String i) { id=i; } }
+    class BinaryExpr extends Expr { String op; Expr left; Expr right; public BinaryExpr(String o, Expr l, Expr r) { op=o; left=l; right=r; } }
+    class UnaryExpr extends Expr { String op; Expr expr; public UnaryExpr(String o, Expr e) { op=o; expr=e; } }
+    class FunCallExpr extends Expr { String id; List args; public FunCallExpr(String i, List a) { id=i; args=a; } }
+:}
+
+parser code {:
+    scanner s;
+    parser(scanner s){ this.s=s; } 
+    
+    public void report_error(String message, Object info) {
+        if (info instanceof Symbol) {
+             Symbol s = (Symbol)info;
+             System.err.println("Sintaxe Erro na Linha: " + s.left + ", Coluna: " + s.right + ": " + message);
+        } else {
+             System.err.println("Sintaxe Erro: " + message);
+        }
+    }
+
+    public void report_fatal_error(String message, Object info) {
+        report_error(message, info);
+        throw new RuntimeException("Erro Fatal de Sintaxe"); 
+    }
+:}
+
+scan with {: return s.next_token(); :};
+
+terminal SEMI, COMMA, LBRACE, RBRACE, LPAREN, RPAREN, ASSIGN;
+terminal PLUS, MINUS, TIMES, DIVIDE, EQ, NEQ, LT, LE, GT, GE;
+terminal IF, ELSE, WHILE, RETURN, INT, FLOAT, VOID;
+terminal String ID;
+terminal Integer INT_CONST;
+terminal Float FLOAT_CONST;
+terminal UMINUS; 
+
+
+non terminal Program program;
+non terminal List declaration_list, param_list, stmt_list, arg_list;
+non terminal VarDecl var_decl;
+non terminal FunDecl fun_decl;
+non terminal Stmt stmt;
+non terminal Expr expr;
+non terminal String type;
+non terminal Object declaration; 
+
+precedence nonassoc ELSE; 
+precedence nonassoc EQ, NEQ;
+precedence nonassoc LT, LE, GT, GE;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence right UMINUS; 
+
+
+program ::= declaration_list:dl 
+    {: RESULT = new Program(); :}
+;
+
+declaration_list ::= declaration_list:dl declaration:d
+    {: dl.add(d); RESULT = dl; :}
+    | /* vazio */
+    {: RESULT = new LinkedList(); :}
+;
+
+declaration ::= var_decl:v 
+    {: RESULT = v; :}
+    | fun_decl:f
+    {: RESULT = f; :}
+;
+
+type ::= INT {: RESULT = "int"; :}
+     | FLOAT {: RESULT = "float"; :}
+     | VOID  {: RESULT = "void"; :}
+;
+
+var_decl ::= type:t ID:id SEMI
+    {: RESULT = new VarDecl(t, id); :}
+    | type:t ID:id ASSIGN expr:e SEMI
+    {: RESULT = new VarDecl(t, id); :} 
+;
+
+fun_decl ::= type:t ID:id LPAREN param_list:p RPAREN stmt:b
+    {: RESULT = new FunDecl(t, id, p, b); :}
+;
+
+param_list ::= param_list:pl COMMA type:t ID:id
+    {: pl.add(new VarDecl(t, id)); RESULT = pl; :}
+    | type:t ID:id
+    {: List list = new LinkedList(); list.add(new VarDecl(t, id)); RESULT = list; :}
+    | /* vazio */
+    {: RESULT = new LinkedList(); :}
+;
+
+stmt ::= LBRACE stmt_list:sl RBRACE
+    {: RESULT = new BlockStmt(sl); :}
+    | IF LPAREN expr:c RPAREN stmt:t ELSE stmt:e
+    {: RESULT = new IfStmt(c, t, e); :}
+    | IF LPAREN expr:c RPAREN stmt:t
+    {: RESULT = new IfStmt(c, t, null); :}
+    | WHILE LPAREN expr:c RPAREN stmt:b
+    {: RESULT = new WhileStmt(c, b); :}
+    | RETURN expr:e SEMI
+    {: RESULT = new ReturnStmt(e); :}
+    | ID:id ASSIGN expr:e SEMI
+    {: RESULT = new AssignStmt(id, e); :}
+    | ID:id LPAREN arg_list:a RPAREN SEMI
+    {: RESULT = new FunCallStmt(id, a); :}
+    | var_decl:v 
+    {: List temp_list = new LinkedList(); temp_list.add(v); RESULT = new BlockStmt(temp_list); :}
+;
+
+stmt_list ::= stmt_list:sl stmt:s
+    {: sl.add(s); RESULT = sl; :}
+    | /* vazio */
+    {: RESULT = new LinkedList(); :}
+;
+
+expr ::= expr:e1 PLUS expr:e2
+    {: RESULT = new BinaryExpr("+", e1, e2); :}
+    | expr:e1 MINUS expr:e2
+    {: RESULT = new BinaryExpr("-", e1, e2); :}
+    | expr:e1 TIMES expr:e2
+    {: RESULT = new BinaryExpr("*", e1, e2); :}
+    | expr:e1 DIVIDE expr:e2
+    {: RESULT = new BinaryExpr("/", e1, e2); :}
+    | expr:e1 EQ expr:e2
+    {: RESULT = new BinaryExpr("==", e1, e2); :}
+    | expr:e1 NEQ expr:e2
+    {: RESULT = new BinaryExpr("!=", e1, e2); :}
+    | expr:e1 LT expr:e2
+    {: RESULT = new BinaryExpr("<", e1, e2); :}
+    | expr:e1 LE expr:e2
+    {: RESULT = new BinaryExpr("<=", e1, e2); :}
+    | expr:e1 GT expr:e2
+    {: RESULT = new BinaryExpr(">", e1, e2); :}
+    | expr:e1 GE expr:e2
+    {: RESULT = new BinaryExpr(">=", e1, e2); :}
+    | MINUS expr:e                 
+    {: RESULT = new UnaryExpr("-", e); :}
+    %prec UMINUS
+    | LPAREN expr:e RPAREN
+    {: RESULT = e; :}
+    | ID:id LPAREN arg_list:a RPAREN
+    {: RESULT = new FunCallExpr(id, a); :}
+    | ID:id
+    {: RESULT = new IdExpr(id); :}
+    | INT_CONST:n
+    {: RESULT = new IntConst(n); :}
+    | FLOAT_CONST:f
+    {: RESULT = new FloatConst(f); :}
+;
+
+arg_list ::= arg_list:al COMMA expr:e
+    {: al.add(e); RESULT = al; :}
+    | expr:e
+    {: List list = new LinkedList(); list.add(e); RESULT = list; :}
+    | /* vazio */
+    {: RESULT = new LinkedList(); :}
+;

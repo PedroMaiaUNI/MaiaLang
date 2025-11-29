@@ -1,0 +1,35 @@
+/*
+ * Programa de Teste Simples para o Scanner/Parser
+ */
+
+// 1. Declaração de Variáveis Globais
+int contador;
+float valor_pi = 3.14159;
+
+// 2. Definição de Função
+void calcular(int limite, float taxa) {
+    contador = 0; // Atribuição
+    int i; // Declaração de variável local
+    
+    // Estrutura de Controle (While Loop)
+    while (i <= limite) {
+        i = i + 1;
+        contador = contador + 1;
+    }
+    
+    // Estrutura de Controle (If-Else)
+    if (taxa > 10.0) {
+        // Chamada de Função
+        imprimir_resultado(contador); 
+    } else {
+        valor_pi = valor_pi * taxa;
+    }
+}
+
+// 3. Outra Função com Retorno
+int imprimir_resultado(int n) {
+    if (n != 0) {
+        return n * 2;
+    }
+    return 0;
+}
