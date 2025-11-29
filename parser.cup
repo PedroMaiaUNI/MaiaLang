@@ -5,32 +5,245 @@ import java.util.LinkedList;
 import java.util.Collections;
 
 action code {: 
-    class Program { 
-        public String toString() { 
-            return "Programa Parsed com Sucesso!"; 
+    abstract class ASTNode {
+        protected String indent(int n) {
+            return "  ".repeat(n);
+        }
+        public abstract String toString(int level);
+
+        @Override
+        public String toString() {
+            return toString(0);
         }
     }
-    class VarDecl { String type; String id; public VarDecl(String t, String i) { type=t; id=i; } }
-    class FunDecl { String type; String id; List params; Stmt body; public FunDecl(String t, String i, List p, Stmt b) { type=t; id=i; params=p; body=b; } }
-    
-    // Statements
-    class Stmt {}
-    class BlockStmt extends Stmt { List stmts; public BlockStmt(List s) { stmts=s; } }
-    class IfStmt extends Stmt { Expr cond; Stmt thenStmt; Stmt elseStmt; public IfStmt(Expr c, Stmt t, Stmt e) { cond=c; thenStmt=t; elseStmt=e; } }
-    class WhileStmt extends Stmt { Expr cond; Stmt body; public WhileStmt(Expr c, Stmt b) { cond=c; body=b; } }
-    class ReturnStmt extends Stmt { Expr expr; public ReturnStmt(Expr e) { expr=e; } }
-    class AssignStmt extends Stmt { String id; Expr expr; public AssignStmt(String i, Expr e) { id=i; expr=e; } }
-    class FunCallStmt extends Stmt { String id; List args; public FunCallStmt(String i, List a) { id=i; args=a; } }
 
-    // Expressions
-    class Expr {}
-    class IntConst extends Expr { Integer value; public IntConst(Integer v) { value=v; } }
-    class FloatConst extends Expr { Float value; public FloatConst(Float v) { value=v; } }
-    class IdExpr extends Expr { String id; public IdExpr(String i) { id=i; } }
-    class BinaryExpr extends Expr { String op; Expr left; Expr right; public BinaryExpr(String o, Expr l, Expr r) { op=o; left=l; right=r; } }
-    class UnaryExpr extends Expr { String op; Expr expr; public UnaryExpr(String o, Expr e) { op=o; expr=e; } }
-    class FunCallExpr extends Expr { String id; List args; public FunCallExpr(String i, List a) { id=i; args=a; } }
+    class Program extends ASTNode {
+        List decls;
+        public Program(List d) { decls = d; }
+
+        @Override
+        public String toString(int level) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Program\n");
+            for (Object o : decls) {
+                if (o instanceof ASTNode)
+                    sb.append(((ASTNode)o).toString(level+1));
+            }
+            return sb.toString();
+        }
+    }
+
+    class VarDecl extends ASTNode {
+        String type;
+        String id;
+        public VarDecl(String t, String i) { type=t; id=i; }
+
+        @Override
+        public String toString(int level) {
+            return indent(level) + "VarDecl(" + type + " " + id + ")\n";
+        }
+    }
+
+    class FunDecl extends ASTNode {
+        String type;
+        String id;
+        List params;
+        Stmt body;
+
+        public FunDecl(String t, String i, List p, Stmt b) {
+            type=t; id=i; params=p; body=b;
+        }
+
+        @Override
+        public String toString(int level) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(indent(level)).append("FunDecl ").append(type)
+              .append(" ").append(id).append("\n");
+
+            sb.append(indent(level+1)).append("Params:\n");
+            for (Object o : params) 
+                sb.append(((ASTNode)o).toString(level+2));
+
+            sb.append(indent(level+1)).append("Body:\n");
+            sb.append(body.toString(level+2));
+
+            return sb.toString();
+        }
+    }
+
+    // ---------------- STATEMENTS ----------------
+
+    class Stmt extends ASTNode {
+        @Override public String toString(int l){ return indent(l)+"Stmt\n"; }
+    }
+
+    class BlockStmt extends Stmt {
+        List stmts;
+        public BlockStmt(List s) { stmts=s; }
+
+        @Override
+        public String toString(int level) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(indent(level)).append("BlockStmt\n");
+            for (Object o : stmts)
+                sb.append(((ASTNode)o).toString(level+1));
+            return sb.toString();
+        }
+    }
+
+    class IfStmt extends Stmt {
+        Expr cond;
+        Stmt thenStmt;
+        Stmt elseStmt;
+        public IfStmt(Expr c, Stmt t, Stmt e) { cond=c; thenStmt=t; elseStmt=e; }
+
+        @Override
+        public String toString(int level) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(indent(level)).append("IfStmt\n");
+
+            sb.append(indent(level+1)).append("Cond:\n");
+            sb.append(cond.toString(level+2));
+
+            sb.append(indent(level+1)).append("Then:\n");
+            sb.append(thenStmt.toString(level+2));
+
+            if (elseStmt != null) {
+                sb.append(indent(level+1)).append("Else:\n");
+                sb.append(elseStmt.toString(level+2));
+            }
+
+            return sb.toString();
+        }
+    }
+
+    class WhileStmt extends Stmt {
+        Expr cond;
+        Stmt body;
+        public WhileStmt(Expr c, Stmt b) { cond=c; body=b; }
+
+        @Override
+        public String toString(int level) {
+            return indent(level)+"WhileStmt\n" +
+                indent(level+1)+"Cond:\n"+cond.toString(level+2) +
+                indent(level+1)+"Body:\n"+body.toString(level+2);
+        }
+    }
+
+    class ReturnStmt extends Stmt {
+        Expr expr;
+        public ReturnStmt(Expr e) { expr=e; }
+
+        @Override
+        public String toString(int level) {
+            return indent(level)+"ReturnStmt\n" +
+                expr.toString(level+1);
+        }
+    }
+
+    class AssignStmt extends Stmt {
+        String id;
+        Expr expr;
+        public AssignStmt(String i, Expr e) { id=i; expr=e; }
+
+        @Override
+        public String toString(int level) {
+            return indent(level)+"AssignStmt("+id+")\n" +
+                expr.toString(level+1);
+        }
+    }
+
+    class FunCallStmt extends Stmt {
+        String id;
+        List args;
+        public FunCallStmt(String i, List a) { id=i; args=a; }
+
+        @Override
+        public String toString(int level) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(indent(level)).append("FunCallStmt ").append(id).append("\n");
+            for (Object o : args)
+                sb.append(((ASTNode)o).toString(level+1));
+            return sb.toString();
+        }
+    }
+
+    // ---------------- EXPRESSIONS ----------------
+
+    abstract class Expr extends ASTNode {}
+
+    class IntConst extends Expr {
+        Integer value;
+        public IntConst(Integer v) { value=v; }
+
+        @Override
+        public String toString(int level) {
+            return indent(level)+"IntConst("+value+")\n";
+        }
+    }
+
+    class FloatConst extends Expr {
+        Float value;
+        public FloatConst(Float v) { value=v; }
+
+        @Override
+        public String toString(int level) {
+            return indent(level)+"FloatConst("+value+")\n";
+        }
+    }
+
+    class IdExpr extends Expr {
+        String id;
+        public IdExpr(String i) { id=i; }
+
+        @Override
+        public String toString(int level) {
+            return indent(level)+"IdExpr("+id+")\n";
+        }
+    }
+
+    class BinaryExpr extends Expr {
+        String op;
+        Expr left;
+        Expr right;
+        public BinaryExpr(String o, Expr l, Expr r) { op=o; left=l; right=r; }
+
+        @Override
+        public String toString(int level) {
+            return indent(level)+"BinaryExpr("+op+")\n" +
+                left.toString(level+1) +
+                right.toString(level+1);
+        }
+    }
+
+    class UnaryExpr extends Expr {
+        String op;
+        Expr expr;
+        public UnaryExpr(String o, Expr e) { op=o; expr=e; }
+
+        @Override
+        public String toString(int level) {
+            return indent(level)+"UnaryExpr("+op+")\n" +
+                expr.toString(level+1);
+        }
+    }
+
+    class FunCallExpr extends Expr {
+        String id;
+        List args;
+        public FunCallExpr(String i, List a) { id=i; args=a; }
+
+        @Override
+        public String toString(int level) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(indent(level)).append("FunCallExpr ").append(id).append("\n");
+            for (Object o : args)
+                sb.append(((ASTNode)o).toString(level+1));
+            return sb.toString();
+        }
+    }
 :}
+
 
 parser code {:
     scanner s;
@@ -80,7 +293,7 @@ precedence right UMINUS;
 
 
 program ::= declaration_list:dl 
-    {: RESULT = new Program(); :}
+    {: RESULT = new Program(dl); :}
 ;
 
 declaration_list ::= declaration_list:dl declaration:d
