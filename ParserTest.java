@@ -8,22 +8,18 @@ public class ParserTest {
         try (FileReader fileReader = new FileReader(fileName);
              BufferedReader reader = new BufferedReader(fileReader)) 
         {
-            // O Scanner e o Parser são criados para o teste isolado
             scanner lexer = new scanner(reader);
             parser syntax_parser = new parser(lexer);
             
             System.out.println("Iniciando análise sintática do arquivo: " + fileName);
             
-            // Inicia a análise e recebe o resultado (o nó raiz da AST)
             Symbol result = syntax_parser.parse();
             
             System.out.println("\n Análise Sintática Concluída com Sucesso!");
             System.out.println("---------------------------------------------");
             System.out.println("--- Árvore Sintática Abstrata (AST) ---");
             
-            // Imprime a AST retornada
             if (result != null && result.value != null) {
-                // Assumimos que o objeto AST tem um método toString() que imprime a estrutura
                 System.out.println(result.value.toString());
             } else {
                 System.out.println("Nó raiz da AST nulo.");

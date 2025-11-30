@@ -7,23 +7,19 @@ public class ScannerTest {
 
         try (FileReader fileReader = new FileReader(fileName)) 
         {
-            // Nota: O JFlex espera um objeto Reader para a leitura
             scanner lexer = new scanner(fileReader);
             Symbol token;
             
             System.out.println("Linha, Coluna: Tipo=Token <Valor>");
             
-            // Loop para consumir e imprimir todos os tokens até o EOF
             do {
                 token = lexer.next_token();
 
-                // 1. VERIFICAÇÃO DE FIM DE ARQUIVO (EOF)
                 if (token.sym == sym.EOF) {
                     System.out.println("Linha " + (token.left + 1) + ", Coluna " + (token.right + 1) + ": Tipo=EOF");
-                    break; // Sai do loop imediatamente
+                    break; 
                 }
 
-                // 2. IMPRESSÃO DOS TOKENS
                 String tokenType = sym.terminalNames[token.sym]; 
                 
                 String tokenValue = token.value != null ? "<" + token.value + ">" : "";

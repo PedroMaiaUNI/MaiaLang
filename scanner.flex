@@ -45,22 +45,22 @@ FLOAT = {DIGIT}+ "." {DIGIT}+ {FLOAT_SUFFIX}? | {DIGIT}+ {FLOAT_SUFFIX}
     "float"         { return symbol(sym.FLOAT); }
     "void"          { return symbol(sym.VOID); }
 
-    // OPERADORES ABRE-FECHA
+    // OPERADORES
     ";"             { return symbol(sym.SEMI); }
     ","             { return symbol(sym.COMMA); }
     "{"             { return symbol(sym.LBRACE); }
     "}"             { return symbol(sym.RBRACE); }
     "("             { return symbol(sym.LPAREN); }
-    ")"             { return new Symbol(sym.RPAREN); }
-    "="             { return new Symbol(sym.ASSIGN); }
+    ")"             { return symbol(sym.RPAREN); }
+    "="             { return symbol(sym.ASSIGN); }
 
     // COMPARADORES
     "=="            { return symbol(sym.EQ); }
-    "!="            { return new Symbol(sym.NEQ); }
-    "<="            { return new Symbol(sym.LE); }
-    ">="            { return new Symbol(sym.GE); }
-    "<"             { return new Symbol(sym.LT); }
-    ">"             { return new Symbol(sym.GT); }
+    "!="            { return symbol(sym.NEQ); }
+    "<="            { return symbol(sym.LE); }
+    ">="            { return symbol(sym.GE); }
+    "<"             { return symbol(sym.LT); }
+    ">"             { return symbol(sym.GT); }
 
     // ARITMETICA
     "+"             { return symbol(sym.PLUS); }
