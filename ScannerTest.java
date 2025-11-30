@@ -3,9 +3,7 @@ import java_cup.runtime.Symbol;
 
 public class ScannerTest {
     public static void runTest(String fileName) {
-        System.out.println("\n=======================================================");
-        System.out.println("--- 🔎 Teste Unitário do Scanner (Análise Léxica) ---");
-        System.out.println("=======================================================");
+        System.out.println("--- Teste Unitário do Scanner (Análise Léxica) ---");
 
         try (FileReader fileReader = new FileReader(fileName)) 
         {
@@ -28,16 +26,14 @@ public class ScannerTest {
                 // 2. IMPRESSÃO DOS TOKENS
                 String tokenType = sym.terminalNames[token.sym]; 
                 
-                // Formatação do valor do token, se existir
                 String tokenValue = token.value != null ? "<" + token.value + ">" : "";
                 
-                // Correção de índice de linha/coluna (JFlex começa em 0, output deve começar em 1)
                 System.out.printf("Linha %d, Coluna %d: Tipo=%s %s%n", 
                                   token.left + 1, token.right + 1, tokenType, tokenValue);
                 
-            } while (true); // O 'break' garante a saída
+            } while (true);  
             
-            System.out.println("✅ Teste do Scanner Concluído com Sucesso! (Tokens lidos até o EOF).");
+            System.out.println("Teste do Scanner Concluído com Sucesso! (Tokens lidos até o EOF).");
         
         } catch (FileNotFoundException e) {
             System.err.println("Erro: Arquivo '" + fileName + "' não encontrado.");
